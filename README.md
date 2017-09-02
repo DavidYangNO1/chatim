@@ -1,4 +1,4 @@
-golang im sercer chat with heatbeat check
+golang im server chat with heatbeat check
 ===========
 
 This is a demo tcp chat client and server with BigEndian binary protocol.
