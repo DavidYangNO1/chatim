@@ -91,7 +91,6 @@ func handleRequest(conn net.Conn) {
 				return
 			}
 			//log.Println(err)
-			return
 		}
 	}
 }
