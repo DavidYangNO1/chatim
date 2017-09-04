@@ -27,6 +27,7 @@ configFile.FlAppInfo.CONN_HeatBeatEnable = 1 enable heatcheck,server will send a
 =================================
 - [x] support chat msg
 - [x] support broadcast communication
+- [x] add iOS client demo send receive message
 - [ ] support group communication
 - [ ] support message encryption
 - [ ] support file transfer
