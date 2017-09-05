@@ -12,14 +12,14 @@ import (
 func FromBytes(b []byte) (int32, error) {
 	buf := bytes.NewReader(b)
 	var result int32
-	err := binary.Read(buf, binary.BigEndian, &result)
+	err := binary.Read(buf, binary.LittleEndian, &result)
 	return result, err
 }
 
 // To convert an int32 to a 4 byte Big Endian binary format
 func ToBytes(i int32) ([]byte, error) {
 	buf := new(bytes.Buffer)
-	err := binary.Write(buf, binary.BigEndian, i)
+	err := binary.Write(buf, binary.LittleEndian, i)
 	return buf.Bytes(), err
 }
 
@@ -48,11 +48,12 @@ func ReadMsg(conn net.Conn) (string, error) {
 	if err != nil {
 		return "", err
 	}
+	fmt.Println(lenBuf)
 	lenData, err := FromBytes(lenBuf)
 	if err != nil {
 		return "", err
 	}
-
+	fmt.Println(int(lenData))
 	// Make a buffer to hold incoming data.
 	buf := make([]byte, lenData)
 	reqLen := 0
