@@ -50,6 +50,8 @@ func main() {
 	}
 }
 
+var xmldata = []byte(`<?xml version="1.0" encoding="utf-8"?><PACKAGE><BODY><amount>121</amount></BODY></PACKAGE>`)
+
 // Handles incoming requests.
 func handleRequest(conn net.Conn) {
 	for {
@@ -66,7 +68,7 @@ func handleRequest(conn net.Conn) {
 				freeUtility.Flog.Info("recv client data ack")
 				continue
 			}
-			broadcast(conn, msg)
+			broadcast(conn, string(xmldata))
 			continue
 		}
 		//server check Heat Beat
