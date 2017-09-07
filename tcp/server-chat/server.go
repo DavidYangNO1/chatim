@@ -76,7 +76,7 @@ func handleRequest(conn net.Conn) {
 			heatMsg := string(CONN_HEARTBEAT)
 			common.WriteMsg(conn, heatMsg)
 			freeUtility.Flog.Info("send ht packet")
-			conn.SetReadDeadline(time.Now().Add(3 * time.Second))
+			conn.SetReadDeadline(time.Now().Add(15 * time.Second))
 			if _, herr := common.ReadMsg(conn); herr == nil {
 				freeUtility.Flog.Info("resv client : " + conn.RemoteAddr().String() + " ht packet ack")
 			} else {

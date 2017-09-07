@@ -35,3 +35,4 @@ configFile.FlAppInfo.CONN_HeatBeatEnable = 1 enable heatcheck,server will send a
 - [ ] support video
 - [ ] support RCP Protobuf
 - [ ] support Microservice 
+
