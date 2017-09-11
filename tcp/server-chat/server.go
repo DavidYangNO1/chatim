@@ -6,10 +6,11 @@ import (
 	configFile "golangim/lotteryim/tcp/file"
 	freeUtility "golangim/lotteryim/tcp/utility"
 	"io"
-
 	"log"
 	"net"
 	"os"
+	"os/signal"
+	"syscall"
 	"time"
 )
 
@@ -17,23 +18,33 @@ const (
 	CONN_HEARTBEAT byte = 3 // s send heartbeat req
 	CONN_RES       byte = 6 // cs send ack
 	CONN_REQ       byte = 5 // cs send data
+	MAXAttempt          = 5
 )
 
 var (
-	connections []net.Conn
+	connections       []net.Conn
+	connectionsTimout map[string]int
 )
 
 func main() {
-
 	// Listen for incoming connections.
 	l, err := net.Listen(configFile.FlAppInfo.CONN_TYPE, configFile.FlAppInfo.CONN_HOST+":"+configFile.FlAppInfo.CONN_PORT)
 	if err != nil {
 		freeUtility.Flog.Error("Error listening:" + err.Error())
 		os.Exit(1)
 	}
-	// Close the listener when the application closes.
 	defer l.Close()
 	freeUtility.Flog.Info("Listening on " + configFile.FlAppInfo.CONN_HOST + ":" + configFile.FlAppInfo.CONN_PORT)
+
+	go handeServer(l)
+
+	ch := make(chan os.Signal)
+	signal.Notify(ch, syscall.SIGINT, syscall.SIGTERM)
+	log.Println(<-ch)
+}
+
+func handeServer(l net.Listener) {
+
 	for {
 		// Listen for an incoming connection.
 		conn, err := l.Accept()
@@ -50,51 +61,65 @@ func main() {
 	}
 }
 
-var xmldata = []byte(`<?xml version="1.0" encoding="utf-8"?><PACKAGE><BODY><amount>121</amount></BODY></PACKAGE>`)
-
 // Handles incoming requests.
 func handleRequest(conn net.Conn) {
 	for {
 		// setReadTimeout
-		err := conn.SetReadDeadline(time.Now().Add(10 * time.Second))
-		if err != nil {
-			fmt.Println(err)
+		errRead := conn.SetReadDeadline(time.Now().Add(10 * time.Second))
+		if errRead != nil {
+			fmt.Println(errRead)
 		}
 
-		if msg, err := common.ReadMsg(conn); err == nil {
+		msg, err := common.ReadMsg(conn)
+		if err == nil {
 			freeUtility.Flog.Info("Message Received: " + msg)
 			cmd := []byte(msg)[0]
 			if cmd == CONN_RES {
 				freeUtility.Flog.Info("recv client data ack")
 				continue
 			}
-			broadcast(conn, string(xmldata))
+			broadcast(conn, msg)
 			continue
-		}
-		//server check Heat Beat
-		if configFile.FlAppInfo.CONN_HeatBeatEnable {
-			heatMsg := string(CONN_HEARTBEAT)
-			common.WriteMsg(conn, heatMsg)
-			freeUtility.Flog.Info("send ht packet")
-			conn.SetReadDeadline(time.Now().Add(15 * time.Second))
-			if _, herr := common.ReadMsg(conn); herr == nil {
-				freeUtility.Flog.Info("resv client : " + conn.RemoteAddr().String() + " ht packet ack")
-			} else {
-				removeConn(conn)
-				conn.Close()
-				freeUtility.Flog.Warn("close client : " + conn.RemoteAddr().String())
-				return
-			}
 		} else {
-			if err == io.EOF {
-				removeConn(conn)
-				conn.Close()
-				freeUtility.Flog.Warn("close client : " + conn.RemoteAddr().String())
-				return
+			//server check Heat Beat
+			if configFile.FlAppInfo.CONN_HeatBeatEnable {
+				heatMsg := string(CONN_HEARTBEAT)
+				common.WriteMsg(conn, heatMsg)
+				freeUtility.Flog.Info("send ht packet")
+				conn.SetReadDeadline(time.Now().Add(3 * time.Second))
+				if _, herr := common.ReadMsg(conn); herr == nil {
+					freeUtility.Flog.Info("resv client : " + conn.RemoteAddr().String() + " ht packet ack")
+				} else {
+					cleseClient(conn)
+					return
+				}
+			} else {
+				if err == io.EOF {
+					cleseClient(conn)
+					return
+				} else if neterr, ok := err.(net.Error); ok && neterr.Timeout() {
+					//time out attempt try
+					if connectionsTimout[conn.RemoteAddr().String()] >= MAXAttempt {
+						cleseClient(conn)
+						return
+					}
+					if connectionsTimout == nil {
+						connectionsTimout = make(map[string]int)
+					}
+					connectionsTimout[conn.RemoteAddr().String()] = connectionsTimout[conn.RemoteAddr().String()] + 1
+				} else if err != nil {
+					log.Println("run to the end " + err.Error())
+				}
 			}
-			//log.Println(err)
 		}
 	}
+}
+
+func cleseClient(conn net.Conn) {
+	removeConn(conn)
+	delete(connectionsTimout, conn.RemoteAddr().String())
+	conn.Close()
+	freeUtility.Flog.Warn("close client : " + conn.RemoteAddr().String())
 }
 
 func removeConn(conn net.Conn) {
