@@ -48,12 +48,12 @@ func ReadMsg(conn net.Conn) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	fmt.Println(lenBuf)
+	//fmt.Println(lenBuf)
 	lenData, err := FromBytes(lenBuf)
 	if err != nil {
 		return "", err
 	}
-	fmt.Println(int(lenData))
+	//fmt.Println(int(lenData))
 	// Make a buffer to hold incoming data.
 	buf := make([]byte, lenData)
 	reqLen := 0

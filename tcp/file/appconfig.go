@@ -1,7 +1,7 @@
 package file
 
 import (
-	freeUtility "golangim/lotteryim/tcp/utility"
+	freeUtility "lotteryim/tcp/utility"
 
 	ini "gopkg.in/ini.v1"
 )

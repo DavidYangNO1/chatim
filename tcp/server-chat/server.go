@@ -2,11 +2,12 @@ package main
 
 import (
 	"fmt"
-	"golangim/lotteryim/tcp/common"
-	configFile "golangim/lotteryim/tcp/file"
-	freeUtility "golangim/lotteryim/tcp/utility"
 	"io"
 	"log"
+	"lotteryim/tcp/common"
+	configFile "lotteryim/tcp/file"
+	jsonMsg "lotteryim/tcp/net"
+	freeUtility "lotteryim/tcp/utility"
 	"net"
 	"os"
 	"os/signal"
@@ -69,7 +70,6 @@ func handleRequest(conn net.Conn) {
 		if errRead != nil {
 			fmt.Println(errRead)
 		}
-
 		msg, err := common.ReadMsg(conn)
 		if err == nil {
 			freeUtility.Flog.Info("Message Received: " + msg)
@@ -79,6 +79,7 @@ func handleRequest(conn net.Conn) {
 				continue
 			}
 			broadcast(conn, msg)
+			//testJsonMsg(conn, msg)
 			continue
 		} else {
 			//server check Heat Beat
@@ -141,4 +142,10 @@ func broadcast(conn net.Conn, msg string) {
 			}
 		}
 	}
+}
+
+func testJsonMsg(conn net.Conn, msg string) {
+	msgPack := jsonMsg.NewNetMsgPack()
+	jsonByte := msgPack.BuildMsgPack(msg, jsonMsg.NetGroupMsgCMD)
+	broadcast(conn, jsonByte)
 }

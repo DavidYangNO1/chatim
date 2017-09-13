@@ -3,11 +3,11 @@ package main
 import (
 	"bufio"
 	"fmt"
-	"golangim/lotteryim/tcp/common"
-	configFile "golangim/lotteryim/tcp/file"
-	freeUtility "golangim/lotteryim/tcp/utility"
 	"io"
 	"log"
+	"lotteryim/tcp/common"
+	configFile "lotteryim/tcp/file"
+	freeUtility "lotteryim/tcp/utility"
 	"net"
 	"os"
 )
@@ -76,14 +76,9 @@ func printOutput(conn *net.TCPConn) {
 		}
 		fmt.Println(msg)
 		/*
-			newMap, err := mxj.NewMapXml([]byte(msg))
-			if err == nil {
-				newJson, _ := newMap.Json()
-				fmt.Printf(string(newJson)) //marshal
-			} else {
-				fmt.Println(msg)
-			}
+			msgPack := jsonMsg.NewNetMsgPack()
+			content, _, _ := msgPack.ParseMsg(msg)
+			fmt.Println("content is " + *content)
 		*/
-
 	}
 }
