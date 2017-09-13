@@ -5,6 +5,8 @@ This is a demo tcp chat client and server with BigEndian binary protocol.
 
 include heatbeat check
 
+msg body suppoer json 
+
 ##The Protocol
 
 A 4 or 8 byte int in big endian format is sent first. This int represents the length of the message to be sent
